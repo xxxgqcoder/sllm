@@ -77,3 +77,56 @@ class Attention(nn.Module):
             self.atten_proj(torch.cat(attens, dim=-1)))
 
         return final_atten_out
+
+
+class DecoderBlock(nn.Module):
+
+    def __init__(
+        self,
+        max_seq_len,
+        atten_head_num,
+        atten_dim,
+        embed_dim,
+        atten_bias,
+        atten_proj_bias,
+    ):
+        super().__init__()
+        self.max_seq_len = max_seq_len
+        self.atten_head_num = atten_head_num
+        self.atten_dim = atten_dim
+        self.embed_dim = embed_dim
+        self.atten_bias = atten_bias
+        self.atten_proj_bias = atten_proj_bias
+
+        self.layer_norm_1 = nn.LayerNorm(embed_dim)
+        self.layer_norm_2 = nn.LayerNorm(embed_dim)
+
+        self.attention = Attention(
+            max_seq_len=max_seq_len,
+            atten_head_num=atten_head_num,
+            atten_dim=atten_dim,
+            embed_dim=embed_dim,
+            atten_bias=atten_bias,
+            atten_proj_bias=atten_proj_bias,
+        )
+
+        self.ffn = nn.Sequential(
+            nn.Linear(in_features=embed_dim, out_features=embed_dim),
+            nn.ReLU(),
+            nn.Linear(in_features=embed_dim, out_features=embed_dim),
+            nn.ReLU(),
+            nn.Dropout(p=0.2),
+        )
+
+    def forward(self, x):
+        # attention
+        atten_out = self.attention(x)
+        residual = atten_out + x
+        normed = self.layer_norm_1(residual)
+
+        # feed forward
+        ffn_out = self.ffn(normed)
+        final_out = ffn_out + normed
+        normed_final_out = self.layer_norm_2(final_out)
+
+        return normed_final_out
