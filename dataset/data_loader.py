@@ -1,5 +1,6 @@
 import os
 import json
+import numpy as np
 
 import torch
 from torch.utils.data import Dataset
@@ -35,10 +36,17 @@ class PretrainDataset(Dataset):
                                   max_length=self.max_length,
                                   padding='max_length',
                                   truncation=True,
-                                  return_tensors='pt')
-        input_ids = encoding.input_ids.squeeze()
+                                  return_tensors='np')
+        input_ids = np.squeeze(encoding.input_ids)
         loss_mask = (input_ids != self.tokenizer.pad_token_id)
 
-        X = torch.tensor(input_ids[:-1], dtype=torch.long)
-        Y = torch.tensor(input_ids[1:], dtype=torch.long)
+        X = np.concatenate(
+            [input_ids[:-1],
+             np.array([self.tokenizer.pad_token_id])], axis=-1)
+        Y = np.concatenate(
+            [input_ids[1:],
+             np.array([self.tokenizer.pad_token_id])], axis=-1)
+
+        X = torch.tensor(X, dtype=torch.long)
+        Y = torch.tensor(Y, dtype=torch.long)
         return X, Y, loss_mask
