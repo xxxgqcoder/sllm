@@ -55,7 +55,7 @@ optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
 loss_fn = nn.CrossEntropyLoss(reduction='none')
 
 model.train()
-for epoch in enumerate(epoch_num):
+for epoch in range(epoch_num):
     print(f'running epoch: {epoch}')
     for batch, (X, Y, loss_mask) in enumerate(train_loader):
         # compute prediction and loss
@@ -73,5 +73,5 @@ for epoch in enumerate(epoch_num):
 
         loss = loss.item()
         print(
-            f"epoch: {epoch}, {datetime.datetime.now()}, step: {batch}, loss: {loss}"
+            f"{datetime.datetime.now()}, epoch: {epoch}, step: {batch}, loss: {loss}"
         )
