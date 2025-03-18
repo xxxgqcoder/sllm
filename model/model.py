@@ -114,7 +114,6 @@ class DecoderBlock(nn.Module):
             nn.Linear(in_features=embed_dim, out_features=embed_dim),
             nn.ReLU(),
             nn.Linear(in_features=embed_dim, out_features=embed_dim),
-            nn.ReLU(),
             nn.Dropout(p=0.2),
         )
 
@@ -174,7 +173,7 @@ class SLLModel(nn.Module):
                     atten_proj_bias=atten_proj_bias,
                 ))
 
-        # logis projection
+        # logit projection
         self.logit = nn.Linear(in_features=embed_dim,
                                out_features=vocab_size,
                                bias=False)
@@ -191,7 +190,6 @@ class SLLModel(nn.Module):
             (-math.log(10000.0) / embed_dim))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
         self.register_buffer('pe', pe)
 
     def forward(
@@ -201,7 +199,7 @@ class SLLModel(nn.Module):
         # embeding
         x = self.embedding(input_ids)
         # positional encoding
-        x = x + self.pe[:x.size(0), :]
+        x = x + self.pe
 
         # decoder blocks
         for decoder in self.decoder_blocks:
@@ -209,5 +207,4 @@ class SLLModel(nn.Module):
 
         # logit
         logit = self.logit(x)
-        pred = torch.argmax(logit, dim=2)
-        return pred
+        return logit
