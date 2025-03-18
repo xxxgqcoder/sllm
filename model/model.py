@@ -32,9 +32,9 @@ class Attention(nn.Module):
         self.atten_proj_bias = atten_proj_bias
 
         # attention projection matrix
-        self.w_q = []
-        self.w_k = []
-        self.w_v = []
+        self.w_q = nn.ModuleList([])
+        self.w_k = nn.ModuleList([])
+        self.w_v = nn.ModuleList([])
         for i in range(atten_head_num):
             self.w_q.append(
                 nn.Linear(in_features=embed_dim,
@@ -161,7 +161,7 @@ class SLLModel(nn.Module):
         self.set_pos_encoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
 
         # decoder block stack
-        self.decoder_blocks = []
+        self.decoder_blocks = nn.ModuleList([])
         for _ in range(layer_num):
             self.decoder_blocks.append(
                 DecoderBlock(
