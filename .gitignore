@@ -5,3 +5,5 @@ out/**
 **/.virtual_documents
 **/.logs
 **/__pycache__/**
+
+**/*.log
