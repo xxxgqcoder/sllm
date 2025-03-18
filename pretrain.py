@@ -51,6 +51,9 @@ model = SLLModel(
     max_seq_len=max_seq_len,
 ).to(device)
 
+param_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
+print(f'total model param num: {param_num}')
+
 optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
 loss_fn = nn.CrossEntropyLoss(reduction='none')
 
