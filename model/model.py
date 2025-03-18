@@ -32,9 +32,9 @@ class Attention(nn.Module):
         self.atten_proj_bias = atten_proj_bias
 
         # attention projection matrix
-        self.w_q = []
-        self.w_k = []
-        self.w_v = []
+        self.w_q = nn.ModuleList([])
+        self.w_k = nn.ModuleList([])
+        self.w_v = nn.ModuleList([])
         for i in range(atten_head_num):
             self.w_q.append(
                 nn.Linear(in_features=embed_dim,
@@ -114,7 +114,6 @@ class DecoderBlock(nn.Module):
             nn.Linear(in_features=embed_dim, out_features=embed_dim),
             nn.ReLU(),
             nn.Linear(in_features=embed_dim, out_features=embed_dim),
-            nn.ReLU(),
             nn.Dropout(p=0.2),
         )
 
@@ -130,3 +129,82 @@ class DecoderBlock(nn.Module):
         normed_final_out = self.layer_norm_2(final_out)
 
         return normed_final_out
+
+
+class SLLModel(nn.Module):
+
+    def __init__(
+        self,
+        vocab_size,
+        layer_num,
+        embed_dim,
+        atten_head_num,
+        max_seq_len,
+        atten_bias=True,
+        atten_proj_bias=True,
+    ):
+        super().__init__()
+        self.vocab_size = vocab_size
+        self.layer_num = layer_num
+        self.atten_head_num = atten_head_num
+        assert embed_dim % 2 == 0, f"embedding dim should be even num, got {embed_dim}"
+        assert embed_dim % atten_head_num == 0, f"embeding dim must divive attention head num, embed_dim: {embed_dim}, atten head num: {atten_head_num}"
+        self.atten_dim = embed_dim // atten_head_num
+
+        self.max_seq_len = max_seq_len
+
+        # embeding layer
+        self.embedding = nn.Embedding(vocab_size,
+                                      embedding_dim=embed_dim,
+                                      max_norm=1.0)
+
+        self.set_pos_encoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
+
+        # decoder block stack
+        self.decoder_blocks = nn.ModuleList([])
+        for _ in range(layer_num):
+            self.decoder_blocks.append(
+                DecoderBlock(
+                    max_seq_len=max_seq_len,
+                    atten_head_num=atten_head_num,
+                    atten_dim=self.atten_dim,
+                    embed_dim=embed_dim,
+                    atten_bias=atten_bias,
+                    atten_proj_bias=atten_proj_bias,
+                ))
+
+        # logit projection
+        self.logit = nn.Linear(in_features=embed_dim,
+                               out_features=vocab_size,
+                               bias=False)
+
+    def set_pos_encoding(
+        self,
+        embed_dim,
+        max_seq_len,
+    ):
+        pe = torch.zeros(max_seq_len, embed_dim)
+        position = torch.arange(0, max_seq_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(
+            torch.arange(0, embed_dim, 2).float() *
+            (-math.log(10000.0) / embed_dim))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(
+        self,
+        input_ids,
+    ):
+        # embeding
+        x = self.embedding(input_ids)
+        # positional encoding
+        x = x + self.pe
+
+        # decoder blocks
+        for decoder in self.decoder_blocks:
+            x = decoder(x)
+
+        # logit
+        logit = self.logit(x)
+        return logit
