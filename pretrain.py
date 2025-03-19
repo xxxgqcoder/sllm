@@ -59,7 +59,8 @@ loss_fn = nn.CrossEntropyLoss(reduction='none')
 
 model.train()
 for epoch in range(epoch_num):
-    print(f'running epoch: {epoch}')
+    print(f'training epoch: {epoch}')
+    start = datetime.datetime.now()
     for batch, (X, Y, loss_mask) in enumerate(train_loader):
         # compute prediction and loss
         X = X.to(device)
@@ -75,6 +76,10 @@ for epoch in range(epoch_num):
         optimizer.zero_grad()
 
         loss = loss.item()
+        elapse_sec = (datetime.datetime.now() - start).seconds
         print(
-            f"{datetime.datetime.now()}, epoch: {epoch}, step: {batch}, loss: {loss}"
+            f"{datetime.datetime.now()}, epoch: {epoch}, step: {batch}, loss: {loss:.06f}, {elapse_sec / (batch+1):.2f} seconds / batch, total elapse {elapse_sec / 3600:.2f} hours"
         )
+    
+    print(f'{datetime.datetime.now()}, finish epoch {epoch}, total elapse {elapse_sec / 3600:.2f} hours, total {batch+1} batch')
+    
