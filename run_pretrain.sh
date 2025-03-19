@@ -5,8 +5,9 @@ cd $(dirname "$0")
 
 train_log='pretrain.log'
 
-touch $train_log || true
+rm $train_log || True
+touch $train_log
 
-nohup python pretrain.py > $train_log 2>&1 &
+nohup python -u pretrain.py > $train_log 2>&1 &
 
 echo "pretrain is running"
