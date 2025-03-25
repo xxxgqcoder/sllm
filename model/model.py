@@ -111,9 +111,9 @@ class DecoderBlock(nn.Module):
         )
 
         self.ffn = nn.Sequential(
-            nn.Linear(in_features=embed_dim, out_features=embed_dim),
+            nn.Linear(in_features=embed_dim, out_features=4 * embed_dim),
             nn.ReLU(),
-            nn.Linear(in_features=embed_dim, out_features=embed_dim),
+            nn.Linear(in_features=4 * embed_dim, out_features=embed_dim),
             nn.Dropout(p=0.2),
         )
 
